@@ -1,21 +1,22 @@
-import { DashboardPage } from "@/components/dashboard-page"
-import { db } from "@/db"
-import { currentUser } from "@clerk/nextjs/server"
-import { notFound } from "next/navigation"
-import { CategoryPageContent } from "./category-page-content"
+import { DashboardPage } from "@/components/dashboard-page";
+import { db } from "@/db";
+import { currentUser } from "@clerk/nextjs/server";
+import { notFound } from "next/navigation";
+import { CategoryPageContent } from "./category-page-content";
 
-// Cambia params para ser una promesa de tipo esperado
+// El tipo de PageProps ahora no necesita ser una promesa
 interface PageProps {
-  params: Promise<{ name: string | string[] | undefined }>;
+  params: {
+    name: string | string[] | undefined;
+  };
+  searchParams: {
+    [key: string]: string | string[] | undefined;
+  };
 }
 
-const Page = async ({ params }: PageProps) => {
-  // Resuelve la promesa de params
-  const resolvedParams = await params;
-
-  // Validación del parámetro 'name'
-  const name = resolvedParams.name;
-  if (typeof name !== "string") return notFound();
+const Page = async ({ params, searchParams }: PageProps) => {
+  // Validación directa del parámetro `name`
+  if (typeof params.name !== "string") return notFound();
 
   const auth = await currentUser();
 
@@ -32,7 +33,7 @@ const Page = async ({ params }: PageProps) => {
   const category = await db.eventCategory.findUnique({
     where: {
       name_userId: {
-        name,
+        name: params.name, // Usamos params.name directamente
         userId: user.id,
       },
     },
