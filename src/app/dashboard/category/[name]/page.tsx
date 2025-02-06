@@ -5,36 +5,34 @@ import { notFound } from "next/navigation"
 import { CategoryPageContent } from "./category-page-content"
 
 interface PageProps {
-  // Cambié el tipo de searchParams para que sea Promise
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  params: {
+    name: string | string[] | undefined
+  }
 }
 
-const Page = async ({ searchParams }: PageProps) => {
-  // Espera a que la promesa de searchParams se resuelva
-  const resolvedSearchParams = await searchParams;
+const Page = async ({ params }: PageProps) => {
+  if (typeof params.name !== "string"){
+    return notFound()
+  }
 
-  // Ahora puedes acceder a resolvedSearchParams
-  const name = resolvedSearchParams.name;
-
-  // Validación del parámetro 'name'
-  if (typeof name !== "string") return notFound();
-
-  const auth = await currentUser();
+  const auth = await currentUser()
 
   if (!auth) {
-    return notFound();
+    return notFound()
   }
 
   const user = await db.user.findUnique({
     where: { externalId: auth.id },
-  });
+  })
 
-  if (!user) return notFound();
+  if (!user){
+    return notFound()
+  }
 
   const category = await db.eventCategory.findUnique({
     where: {
       name_userId: {
-        name,
+        name: params.name,
         userId: user.id,
       },
     },
@@ -45,17 +43,19 @@ const Page = async ({ searchParams }: PageProps) => {
         },
       },
     },
-  });
+  })
 
-  if (!category) return notFound();
+  if (!category) {
+    return notFound()
+  }
 
-  const hasEvents = category._count.events > 0;
+  const hasEvents = category._count.events > 0
 
   return (
     <DashboardPage title={`${category.emoji} ${category.name} events`}>
       <CategoryPageContent hasEvents={hasEvents} category={category} />
     </DashboardPage>
-  );
+  )
 }
 
-export default Page;
+export default Page
